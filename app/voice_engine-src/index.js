@@ -45,9 +45,6 @@ ipcRenderer.on('get-token-and-fingerprint', function(ev, {token: rawToken, finge
 });
 ipcRenderer.on('create-transport', function(ev, ssrc, userId, address, port, cb) {
   console.log('create-transport:', ssrc, userId, address, port, cb);
-  VoiceEngine.onConnectionState((connectionState) => {
-    console.log('onConnectionState:', connectionState);
-  });
   VoiceEngine.enable((err) => {
     console.log('VoiceEngine.enable:', err);
   });
@@ -60,6 +57,10 @@ ipcRenderer.on('set-on-speaking-callback', function(ev, cb) {
 ipcRenderer.on('set-on-voice-callback', function(ev, cb) {
   console.log('set-on-voice-callback:', cb);
   VoiceEngine.onVoiceActivity(_deInterop(cb));
+});
+ipcRenderer.on('on-connection-state', function(ev, cb) {
+  console.log('on-connection-state:', cb);
+  VoiceEngine.onConnectionState(_deInterop(cb));
 });
 ipcRenderer.on('set-device-change-callback', function(ev, cb) {
   console.log('set-device-change-callback:', cb);
@@ -83,6 +84,10 @@ ipcRenderer.on('set-input-device', function(ev, inputDeviceIndex) {
 ipcRenderer.on('get-output-devices', function(ev, cb) {
   console.log('get-output-devices:', cb);
   VoiceEngine.getOutputDevices(_deInterop(cb));
+});
+ipcRenderer.on('set-output-volume', function(ev, volume) {
+  console.log('set-output-volume:', volume);
+  VoiceEngine.setOutputVolume(volume);
 });
 ipcRenderer.on('set-self-deafen', function(ev, deaf) {
   console.log('set-self-deafen:', deaf);

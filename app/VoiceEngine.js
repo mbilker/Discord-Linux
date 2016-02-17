@@ -34,7 +34,7 @@ VoiceEngine.prototype.__proto__ = events.EventEmitter.prototype;
 VoiceEngine.prototype._init = function () {};
 
 const logCall = (name) => (...args) => {
-  console.log(`${name}: ${args}`);
+  console.log(`${name}:`, ...args);
 };
 
 VoiceEngine.prototype._interop = function(id, cb) {
@@ -63,7 +63,13 @@ VoiceEngine.prototype.setOnSpeakingCallback = function(cb) {
 VoiceEngine.prototype.setOnVoiceCallback = function(cb) {
   this.window.webContents.send('set-on-voice-callback', this._interop('set-on-voice-callback', cb));
 };
+VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
+  this.window.webContents.send('set-device-change-callback', this._interop('set-device-change-callback', cb));
+};
 VoiceEngine.prototype.setEmitVADLevel = noop;
+VoiceEngine.prototype.onConnectionState = function(cb) {
+  this.window.webContents.send('on-connection-state', this._interop('on-connection-state', cb));
+};
 VoiceEngine.prototype.getInputDevices = function(cb) {
   this.window.webContents.send('get-input-devices', this._interop('get-input-devices', cb));
 };
@@ -83,8 +89,9 @@ VoiceEngine.prototype.setOutputDevice = noop;
 // WebRTC backend does not support setting the input volume
 VoiceEngine.prototype.setInputVolume = noop;
 
-VoiceEngine.prototype.setOutputVolume = logCall('setOutputVolume');
-
+VoiceEngine.prototype.setOutputVolume = function(volume) {
+  this.window.webContents.send('set-output-volume', volume);
+};
 VoiceEngine.prototype.setSelfDeafen = function(deaf) {
   this.window.webContents.send('set-self-deafen', deaf);
 }
@@ -93,7 +100,7 @@ VoiceEngine.prototype.destroyTransport = function() {
 };
 
 // WebRTC backend does not implement this method
-VoiceEngine.prototype.setTransportOptions = noop;
+VoiceEngine.prototype.setTransportOptions = logCall('setTransportOptions');
 
 VoiceEngine.prototype.mergeUsers = function(users) {
   this.window.webContents.send('merge-users', users);
@@ -101,6 +108,7 @@ VoiceEngine.prototype.mergeUsers = function(users) {
 VoiceEngine.prototype.destroyUser = function(userId) {
   this.window.webContents.send('destroy-user', userId);
 };
+
 
 exports['default'] = new VoiceEngine({});
 module.exports = exports['default'];
