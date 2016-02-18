@@ -436,7 +436,8 @@ function main() {
       resizable: true,
       show: isVisible,
       webPreferences: {
-        blinkFeatures: "EnumerateDevices,AudioOutputDevices"
+        blinkFeatures: "EnumerateDevices,AudioOutputDevices",
+        preload: require('path').join(__dirname, 'preload.js')
       }
     };
 
@@ -461,6 +462,10 @@ function main() {
     mainWindow.webContents.on('did-fail-load', function (e, errCode, errDesc) {
       console.error("did-fail-load", e, errCode, errDesc);
     });
+
+    //mainWindow.webContents.on('did-start-loading', function() {
+    //  mainWindow.webContents.executeJavaScript("console.log(window.webpackJsonp); window['webpackJsonp'] = console.log.bind(console, 'parent webpack:')");
+    //});
 
     mainWindow.webContents.on('crashed', function () {
       console.error("crashed... reloading");
