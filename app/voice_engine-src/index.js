@@ -27,7 +27,11 @@ window.RTCSessionDescription = window.RTCSessionDescription ||
 const _deInterop = (cb) => {
   if (cb && cb['__INTEROP_CALLBACK'] && cb.name) {
     return (...args) => {
-      if (cb.name !== 'set-on-voice-callback-reply') console.log(`${cb.name}:`, ...args);
+      if (cb.name !== 'set-on-speaking-callback-reply' &&
+          cb.name !== 'set-on-voice-callback-reply' &&
+          cb.name !== 'set-device-change-callback-reply') {
+        console.log(`${cb.name}:`, ...args);
+      }
       ipcRenderer.send(cb.name, ...args);
     };
   }
@@ -70,16 +74,25 @@ ipcRenderer.on('get-input-devices', function(ev, cb) {
   console.log('get-input-devices:', cb);
   VoiceEngine.getInputDevices(_deInterop(cb));
 });
+['setEchoCancellation', 'setNoiseSuppression', 'setAutomaticGainControl'].forEach(function(method) {
+  ipcRenderer.on(method, function(ev, enabled) {
+    console.log(`${method}:`, enabled);
+    VoiceEngine[method](enabled);
+  });
+});
+ipcRenderer.on('set-input-device', function(ev, inputDeviceIndex) {
+  console.log('set-input-device:', inputDeviceIndex);
+  VoiceEngine.getInputDevices((devices) => {
+    const device = devices[inputDeviceIndex].id;
+    VoiceEngine.setInputDevice(device);
+  });
+});
 ipcRenderer.on('set-input-mode', function(ev, mode, options) {
   console.log('set-input-mode:', mode, options);
   if (NATIVE_TO_REGULAR[mode] === InputModes.PUSH_TO_TALK) {
     options = Object.assign({}, options, { delay: options.pttDelay });
   }
   VoiceEngine.setInputMode(NATIVE_TO_REGULAR[mode], options);
-});
-ipcRenderer.on('set-input-device', function(ev, inputDeviceIndex) {
-  console.log('set-input-device:', inputDeviceIndex);
-  VoiceEngine.setInputDevice(inputDeviceIndex);
 });
 ipcRenderer.on('get-output-devices', function(ev, cb) {
   console.log('get-output-devices:', cb);
@@ -89,13 +102,33 @@ ipcRenderer.on('set-output-volume', function(ev, volume) {
   console.log('set-output-volume:', volume);
   VoiceEngine.setOutputVolume(volume);
 });
+ipcRenderer.on('set-self-mute', function(ev, mute) {
+  console.log('set-self-mute:', mute);
+  VoiceEngine.setSelfMute(mute);
+});
 ipcRenderer.on('set-self-deafen', function(ev, deaf) {
   console.log('set-self-deafen:', deaf);
   VoiceEngine.setSelfDeaf(deaf);
 });
+ipcRenderer.on('set-local-mute', function(ev, userId, mute) {
+  console.log('set-local-mute:', userId, mute);
+  VoiceEngine.setLocalMute(userId, mute);
+});
+ipcRenderer.on('set-local-volume', function(ev, userId, volume) {
+  console.log('set-local-volume:', userId, volume);
+  VoiceEngine.setLocalVolume(userId, volume);
+});
 ipcRenderer.on('destroy-transport', function(ev) {
   console.log('destroy-transport');
   VoiceEngine.disconnect();
+});
+ipcRenderer.on('handle-speaking', function(ev, userId, speaking) {
+  //console.log('handle-speaking:', userId, speaking);
+  VoiceEngine.handleSpeaking(userId, speaking);
+});
+ipcRenderer.on('handle-session-description', function(ev, obj) {
+  console.log('handle-session-description:', obj);
+  VoiceEngine.handleSessionDescription(obj);
 });
 ipcRenderer.on('merge-users', function(ev, users) {
   console.log('merge-users:', users);
