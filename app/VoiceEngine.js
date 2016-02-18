@@ -48,15 +48,73 @@ VoiceEngine.prototype._interop = function(id, cb) {
   return { __INTEROP_CALLBACK: true, name: `${id}-reply` };
 };
 
-VoiceEngine.prototype.createTransport = function (ssrc, userId, serverIp, port, callback) {
-  //this._createTransport(this, ssrc, userId, serverIp, port, callback);
+const methods = [
+  'enable',
+  'setPTTActive',
+  'setInputMode',
+  'setOutputVolume',
+  'setSelfMute',
+  'setSelfDeaf',
+  'setLocalMute',
+  'setLocalVolume',
+  'createUser',
+  'destroyUser',
+  'onSpeaking',
+  'onVoiceActivity',
+  'onDevicesChanged',
+  'getInputDevices',
+  'getOutputDevices',
+  'canSetInputDevice',
+  'setInputDevice',
+  'setEncodingBitRate',
+  'setEchoCancellation',
+  'setNoiseSuppression',
+  'setAutomaticGainControl',
+  'onConnectionState',
+  //'connect', // include custom method call
+  'disconnect',
+  'handleSessionDescription',
+  'handleSpeaking',
+  'debugDump'
+];
+
+function createTemplateFunction(methodName) {
+  return function() {
+    const args = Array.prototype.slice.call(arguments, 0);
+    let passedArgs = [methodName];
+
+    args.forEach((arg) => {
+      if (typeof(arg) === 'function') {
+        passedArgs.push(this._interop(methodName, arg));
+      } else {
+        passedArgs.push(arg);
+      }
+    });
+
+    this.window.webContents.send('callVoiceEngineMethod', passedArgs);
+  };
+};
+
+methods.forEach(function(methodName) {
+  VoiceEngine.prototype[methodName] = createTemplateFunction(methodName);
+});
+
+VoiceEngine.prototype._connect = createTemplateFunction('connect');
+VoiceEngine.prototype.connect = function connect(ssrc, userId, serverIp, port, callback) {
   const window = BrowserWindow.getAllWindows().filter(b => b.id !== this.window.id)[0];
   window.webContents.executeJavaScript("require('electron').ipcRenderer.send('get-token-and-fingerprint', {token:localStorage.getItem('token'),fingerprint:localStorage.getItem('fingerprint')})");
 
   setTimeout(() => {
-    this.window.webContents.send('create-transport', ssrc, userId, serverIp, port, this._interop('create-transport', callback));
+    this._connect(ssrc, userId, serverIp, port, this._interop('connect', callback));
   }, 500);
 };
+
+VoiceEngine.prototype.setEmitVADLevel = noop;
+VoiceEngine.prototype.setInputVolume = noop;
+VoiceEngine.prototype.setSelfDeafen = noop;
+VoiceEngine.prototype.setOutputDevice = noop;
+
+/*
 VoiceEngine.prototype.setOnSpeakingCallback = function(cb) {
   this.window.webContents.send('set-on-speaking-callback', this._interop('set-on-speaking-callback', cb));
 };
@@ -66,7 +124,6 @@ VoiceEngine.prototype.setOnVoiceCallback = function(cb) {
 VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
   this.window.webContents.send('set-device-change-callback', this._interop('set-device-change-callback', cb));
 };
-VoiceEngine.prototype.setEmitVADLevel = noop;
 VoiceEngine.prototype.onConnectionState = function(cb) {
   this.window.webContents.send('on-connection-state', this._interop('on-connection-state', cb));
 };
@@ -89,13 +146,15 @@ VoiceEngine.prototype.setInputMode = function(mode, options) {
 VoiceEngine.prototype.getOutputDevices = function(cb) {
   this.window.webContents.send('get-output-devices', this._interop('get-output-devices', cb));
 };
+*/
 
 // WebRTC backend does not support setting the output device
-VoiceEngine.prototype.setOutputDevice = noop;
+//VoiceEngine.prototype.setOutputDevice = noop;
 
 // WebRTC backend does not support setting the input volume
-VoiceEngine.prototype.setInputVolume = noop;
+//VoiceEngine.prototype.setInputVolume = noop;
 
+/*
 VoiceEngine.prototype.setOutputVolume = function(volume) {
   this.window.webContents.send('set-output-volume', volume * 100);
 };
@@ -114,10 +173,12 @@ VoiceEngine.prototype.setLocalVolume = function(userId, volume) {
 VoiceEngine.prototype.destroyTransport = function() {
   this.window.webContents.send('destroy-transport');
 };
+*/
 
 // WebRTC backend does not implement this method
-VoiceEngine.prototype.setTransportOptions = logCall('setTransportOptions');
+//VoiceEngine.prototype.setTransportOptions = logCall('setTransportOptions');
 
+/*
 VoiceEngine.prototype.handleSpeaking = function(userId, speaking) {
   this.window.webContents.send('handle-speaking', userId, speaking);
 };
@@ -130,7 +191,7 @@ VoiceEngine.prototype.mergeUsers = function(users) {
 VoiceEngine.prototype.destroyUser = function(userId) {
   this.window.webContents.send('destroy-user', userId);
 };
-
+*/
 
 exports['default'] = new VoiceEngine({});
 module.exports = exports['default'];

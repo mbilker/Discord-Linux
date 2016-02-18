@@ -3,13 +3,7 @@ import {ipcRenderer} from 'electron';
 localStorage.debug = '*';
 
 import monkeyPatch from './superagentPatch';
-
-//const _VoiceEngine = require('./lib/voice_engine/webrtc');
-//const VoiceEngine = _VoiceEngine && _VoiceEngine['__esModule'] ? _VoiceEngine.default ? _VoiceEngine;
 import VoiceEngine from './lib/voice_engine/webrtc';
-
-import {InputModes} from './Constants';
-import {NATIVE_TO_REGULAR} from './lib/voice_engine/native/Constants';
 
 navigator.getUserMedia = navigator.getUserMedia ||
   navigator.webkitGetUserMedia ||
@@ -24,16 +18,18 @@ window.RTCSessionDescription = window.RTCSessionDescription ||
   window.mozRTCSessionDescription ||
   window.webkitRTCSessionDescription;
 
-const _deInterop = (cb) => {
-  if (cb && cb['__INTEROP_CALLBACK'] && cb.name) {
+const _deInterop = (arg) => {
+  if (arg && arg['__INTEROP_CALLBACK'] && arg.name) {
     return (...args) => {
-      if (cb.name !== 'set-on-speaking-callback-reply' &&
-          cb.name !== 'set-on-voice-callback-reply' &&
-          cb.name !== 'set-device-change-callback-reply') {
-        console.log(`${cb.name}:`, ...args);
+      if (arg.name !== 'setOnSpeakingCallback-reply' &&
+          arg.name !== 'setOnVoiceCallback-reply' &&
+          arg.name !== 'setDeviceChangeCallback-reply') {
+        console.log(`${arg.name}:`, ...args);
       }
-      ipcRenderer.send(cb.name, ...args);
+      ipcRenderer.send(arg.name, ...args);
     };
+  } else {
+    return arg;
   }
 };
 
@@ -46,7 +42,83 @@ ipcRenderer.on('get-token-and-fingerprint', function(ev, {token: rawToken, finge
 
   localStorage.setItem('token', token);
   localStorage.setItem('fingerprint', fingerprint);
+
+  VoiceEngine.getInputDevices((devices) => {
+    const device = devices[0].id;
+    VoiceEngine.setInputDevice(device);
+
+    VoiceEngine.enable((err) => {
+      console.log('VoiceEngine.enable:', err);
+    });
+  });
 });
+
+ipcRenderer.on('callVoiceEngineMethod', (ev, args) => {
+  let methodName = args.shift();
+  let passedArgs = [];
+
+  console.log(`${methodName}:`, ...args);
+
+  args.forEach((arg) => {
+    if (arg && arg.__INTEROP_CALLBACK) {
+      passedArgs.push(_deInterop(arg));
+    } else {
+      passedArgs.push(arg);
+    }
+  });
+
+  VoiceEngine[methodName].apply(null, passedArgs);
+});
+
+/*
+const methods = [
+  'enable',
+  'setPTTActive',
+  'setOutputVolume',
+  'setSelfMute',
+  'setSelfDeaf',
+  'setLocalMute',
+  'setLocalVolume',
+  'createUser',
+  'destroyUser',
+  'onSpeaking',
+  'onVoiceActivity',
+  'onDevicesChanged',
+  'getInputDevices',
+  'getOutputDevices',
+  'canSetInputDevice',
+  'setInputDevice',
+  'setEncodingBitRate',
+  'setEchoCancellation',
+  'setNoiseSuppression',
+  'setAutomaticGainControl',
+  'onConnectionState',
+  'connect',
+  'disconnect',
+  'handleSessionDescription',
+  'handleSpeaking',
+  'debugDump'
+];
+*/
+
+/*
+methods.forEach((methodName) => {
+  ipcRenderer.on(methodName, (ev, ...args) => {
+    let passedArgs = [];
+
+    args.forEach((arg) => {
+      if (arg.__INTEROP_CALLBACK) {
+        passedArgs.push(_deInterop(arg));
+      } else {
+        passedArgs.push(arg);
+      }
+    });
+
+    VoiceEngine[methodName].apply(null, passedArgs);
+  });
+});
+*/
+/*
 ipcRenderer.on('create-transport', function(ev, ssrc, userId, address, port, cb) {
   console.log('create-transport:', ssrc, userId, address, port, cb);
   VoiceEngine.enable((err) => {
@@ -140,3 +212,4 @@ ipcRenderer.on('destroy-user', function(ev, userId) {
   console.log('destroy-user:', userId);
   VoiceEngine.destroyUser(userId);
 });
+*/
