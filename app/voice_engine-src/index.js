@@ -23,9 +23,9 @@ window.VoiceEngine = VoiceEngine;
 const _deInterop = (arg) => {
   if (arg && arg['__INTEROP_CALLBACK'] && arg.name) {
     return (...args) => {
-      if (!arg.startsWith('setOnSpeakingCallback') &&
-          !arg.startsWith('setOnVoiceCallback') &&
-          !arg.startsWith('setDeviceChangeCallback')) {
+      if (!arg.name.startsWith('setOnSpeakingCallback') &&
+          !arg.name.startsWith('setOnVoiceCallback') &&
+          !arg.name.startsWith('setDeviceChangeCallback')) {
         console.log(`${arg.name}:`, ...args);
       }
       ipcRenderer.send(arg.name, ...args);
