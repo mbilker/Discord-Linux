@@ -51,7 +51,7 @@ VoiceEngine.prototype._interop = function(id, cb) {
 const methods = [
   'enable',
   'setPTTActive',
-  'setInputMode',
+  //'setInputMode',
   'setOutputVolume',
   'setSelfMute',
   'setSelfDeaf',
@@ -86,6 +86,10 @@ function createTemplateFunction(methodName) {
     args.forEach((arg) => {
       if (typeof(arg) === 'function') {
         passedArgs.push(this._interop(methodName, arg));
+      } else if ((methodName === 'setLocalVolume' ||
+                  methodName === 'setOutputVolume'
+                 ) && typeof(arg) === 'number') {
+        passedArgs.push(arg * 100);
       } else {
         passedArgs.push(arg);
       }
@@ -109,21 +113,42 @@ VoiceEngine.prototype.connect = function connect(ssrc, userId, serverIp, port, c
   }, 500);
 };
 
+VoiceEngine.prototype._setInputMode = createTemplateFunction('setInputMode');
+VoiceEngine.prototype.setInputMode = function setInputMode(mode, options) {
+  if (typeof(mode) === 'number') {
+    if (mode === 1) {
+      mode = "VOICE_ACTIVITY";
+    } else if (mode === 2) {
+      mode = "PUSH_TO_TALK";
+    }
+  }
+
+  options = {
+    shortcut: options.shortcut,
+    threshold: options.vadThreshold,
+    autoThreshold: !!options.vadAutoThreshold,
+    delay: options.pttDelay
+  };
+
+  this._setInputMode(mode, options);
+}
+
 VoiceEngine.prototype.setEmitVADLevel = noop;
 VoiceEngine.prototype.setInputVolume = noop;
-VoiceEngine.prototype.setSelfDeafen = noop;
+VoiceEngine.prototype.setSelfDeafen = VoiceEngine.prototype.setSelfDeaf;
 VoiceEngine.prototype.setOutputDevice = noop;
 
-/*
 VoiceEngine.prototype.setOnSpeakingCallback = function(cb) {
-  this.window.webContents.send('set-on-speaking-callback', this._interop('set-on-speaking-callback', cb));
+  this.window.webContents.send('setOnSpeakingCallback', this._interop('setOnSpeakingCallback', cb));
 };
 VoiceEngine.prototype.setOnVoiceCallback = function(cb) {
-  this.window.webContents.send('set-on-voice-callback', this._interop('set-on-voice-callback', cb));
+  this.window.webContents.send('setOnVoiceCallback', this._interop('setOnVoiceCallback', cb));
 };
 VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
-  this.window.webContents.send('set-device-change-callback', this._interop('set-device-change-callback', cb));
+  this.window.webContents.send('setDeviceChangeCallback', this._interop('setDeviceChangeCallback', cb));
 };
+
+/*
 VoiceEngine.prototype.onConnectionState = function(cb) {
   this.window.webContents.send('on-connection-state', this._interop('on-connection-state', cb));
 };

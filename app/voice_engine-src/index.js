@@ -18,6 +18,8 @@ window.RTCSessionDescription = window.RTCSessionDescription ||
   window.mozRTCSessionDescription ||
   window.webkitRTCSessionDescription;
 
+window.VoiceEngine = VoiceEngine;
+
 const _deInterop = (arg) => {
   if (arg && arg['__INTEROP_CALLBACK'] && arg.name) {
     return (...args) => {
@@ -126,21 +128,25 @@ ipcRenderer.on('create-transport', function(ev, ssrc, userId, address, port, cb)
   });
   VoiceEngine.connect(ssrc, userId, address, port, _deInterop(cb));
 });
-ipcRenderer.on('set-on-speaking-callback', function(ev, cb) {
-  console.log('set-on-speaking-callback:', cb);
+*/
+
+ipcRenderer.on('setOnSpeakingCallback', function(ev, cb) {
+  console.log('setOnSpeakingCallback:', cb);
   VoiceEngine.onSpeaking(_deInterop(cb));
 });
-ipcRenderer.on('set-on-voice-callback', function(ev, cb) {
-  console.log('set-on-voice-callback:', cb);
+ipcRenderer.on('setOnVoiceCallback', function(ev, cb) {
+  console.log('setOnVoiceCallback:', cb);
   VoiceEngine.onVoiceActivity(_deInterop(cb));
 });
-ipcRenderer.on('on-connection-state', function(ev, cb) {
-  console.log('on-connection-state:', cb);
-  VoiceEngine.onConnectionState(_deInterop(cb));
-});
-ipcRenderer.on('set-device-change-callback', function(ev, cb) {
-  console.log('set-device-change-callback:', cb);
+ipcRenderer.on('setDeviceChangeCallback', function(ev, cb) {
+  console.log('setDeviceChangeCallback:', cb);
   VoiceEngine.onDevicesChanged(_deInterop(cb));
+});
+
+/*
+ipcRenderer.on('onConnectionState', function(ev, cb) {
+  console.log('onConnectionState:', cb);
+  VoiceEngine.onConnectionState(_deInterop(cb));
 });
 ipcRenderer.on('get-input-devices', function(ev, cb) {
   console.log('get-input-devices:', cb);
