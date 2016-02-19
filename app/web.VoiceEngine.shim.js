@@ -97,7 +97,7 @@ function webpackCb(chunkIds, moreModules) {
   if (runWebpackCb) return;
   runWebpackCb = true;
 
-  console.log('parent webpack:', moreModules);
+  console.log('parent webpack');
 
   setImmediate(afterInitialJsonp);
 }

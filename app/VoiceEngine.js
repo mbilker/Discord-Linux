@@ -33,18 +33,21 @@ var VoiceEngine = function() {
   });
 }
 
-VoiceEngine.prototype.__proto__ = events.EventEmitter.prototype;
+//VoiceEngine.prototype.__proto__ = events.EventEmitter.prototype;
 VoiceEngine.prototype._init = function () {};
-
-const logCall = (name) => (...args) => {
-  console.log(`${name}:`, ...args);
+VoiceEngine.prototype._listCallbacks = function() {
+  return JSON.stringify(Object.keys(this.callbacks));
 };
 
 VoiceEngine.prototype._interop = function(id, cb) {
+  const isNewCallback = !this.callbacks[id];
   this.callbacks[id] = cb;
-  ipcMain.on(`${id}-reply`, (ev, ...args) => {
-    this.callbacks[id](...args);
-  });
+
+  if (isNewCallback) {
+    ipcMain.on(`${id}-reply`, (ev, ...args) => {
+      this.callbacks[id](...args);
+    });
+  }
 
   return { __INTEROP_CALLBACK: true, name: `${id}-reply` };
 };
@@ -79,14 +82,14 @@ const methods = [
   'debugDump'
 ];
 
-function createTemplateFunction(methodName) {
+function createTemplateFunction(methodName, callbackOnce) {
   return function() {
     const args = Array.prototype.slice.call(arguments, 0);
     let passedArgs = [methodName];
 
     args.forEach((arg) => {
       if (typeof(arg) === 'function') {
-        passedArgs.push(this._interop(methodName + crypto.pseudoRandomBytes(4).toString('hex'), arg));
+        passedArgs.push(this._interop(methodName, arg, callbackOnce));
       } else if ((methodName === 'setLocalVolume' ||
                   methodName === 'setOutputVolume'
                  ) && typeof(arg) === 'number') {
@@ -150,6 +153,10 @@ VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
 };
 
 /*
+const logCall = (name) => (...args) => {
+  console.log(`${name}:`, ...args);
+};
+
 VoiceEngine.prototype.onConnectionState = function(cb) {
   this.window.webContents.send('on-connection-state', this._interop('on-connection-state', cb));
 };
