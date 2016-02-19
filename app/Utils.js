@@ -9,6 +9,7 @@ Object.defineProperty(exports, '__esModule', {
 var noop = function noop() {};
 
 exports['default'] = {
-getIdleMilliseconds: noop
+  shouldDisplayNotifications: true,
+  getIdleMilliseconds: noop
 }
 module.exports = exports['default'];
