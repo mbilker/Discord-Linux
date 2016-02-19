@@ -1,6 +1,7 @@
 'use strict';
 
 const electron = require('electron');
+const crypto = require('crypto');
 const events = require('events');
 const path = require('path');
 
@@ -10,6 +11,8 @@ const ipcMain = electron.ipcMain;
 var noop = function noop() {}
 
 var VoiceEngine = function() {
+  this.callbacks = [];
+
   electron.app.on('ready', () => {
     this.window = new BrowserWindow({
       width: 200,
@@ -38,8 +41,6 @@ const logCall = (name) => (...args) => {
 };
 
 VoiceEngine.prototype._interop = function(id, cb) {
-  this.callbacks = this.callbacks || {};
-
   this.callbacks[id] = cb;
   ipcMain.on(`${id}-reply`, (ev, ...args) => {
     this.callbacks[id](...args);
@@ -85,7 +86,7 @@ function createTemplateFunction(methodName) {
 
     args.forEach((arg) => {
       if (typeof(arg) === 'function') {
-        passedArgs.push(this._interop(methodName, arg));
+        passedArgs.push(this._interop(methodName + crypto.pseudoRandomBytes(4).toString('hex'), arg));
       } else if ((methodName === 'setLocalVolume' ||
                   methodName === 'setOutputVolume'
                  ) && typeof(arg) === 'number') {

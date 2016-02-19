@@ -40,10 +40,6 @@ var VoiceEngineShim = {
     return platform.layout === 'Blink';
   },
 
-  setNoInputCallback() {},
-
-  setNoInputThreshold() {},
-
   collectDiagnostics(callback) {
     callback(null);
   },
@@ -108,11 +104,12 @@ function webpackCb(chunkIds, moreModules) {
 
 function injectedModule(module, exports, webpackRequire) {
   console.log('injected module');
-  window.__webpackRequre = webpackRequire;
-  console.log(webpackRequire.c);
 
   var webpackVoiceEngines = [0];
   var modules = webpackRequire.c;
+
+  window.__webpackRequire = webpackRequire;
+  window.__voiceEngines = webpackVoiceEngines;
 
   for (var i = 0; i < webpackRequire.m.length; i++) {
     if (modules[i] && modules[i].exports && modules[i].exports.handleSessionDescription) {
