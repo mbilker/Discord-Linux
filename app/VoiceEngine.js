@@ -90,9 +90,7 @@ function createTemplateFunction(methodName, callbackOnce) {
     args.forEach((arg) => {
       if (typeof(arg) === 'function') {
         passedArgs.push(this._interop(methodName, arg, callbackOnce));
-      } else if ((methodName === 'setLocalVolume' ||
-                  methodName === 'setOutputVolume'
-                 ) && typeof(arg) === 'number') {
+      } else if (methodName === 'setOutputVolume' && typeof(arg) === 'number') {
         passedArgs.push(arg * 100);
       } else {
         passedArgs.push(arg);
