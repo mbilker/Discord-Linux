@@ -90,9 +90,7 @@ function createTemplateFunction(methodName, callbackOnce) {
     args.forEach((arg) => {
       if (typeof(arg) === 'function') {
         passedArgs.push(this._interop(methodName, arg, callbackOnce));
-      } else if ((methodName === 'setLocalVolume' ||
-                  methodName === 'setOutputVolume'
-                 ) && typeof(arg) === 'number') {
+      } else if (methodName === 'setOutputVolume' && typeof(arg) === 'number') {
         passedArgs.push(arg * 100);
       } else {
         passedArgs.push(arg);
@@ -152,79 +150,9 @@ VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
   this.window.webContents.send('setDeviceChangeCallback', this._interop('setDeviceChangeCallback', cb));
 };
 
-/*
-const logCall = (name) => (...args) => {
-  console.log(`${name}:`, ...args);
+VoiceEngine.prototype.playSound = function(name, volume) {
+  this.window.webContents.send('playSound', name, volume);
 };
-
-VoiceEngine.prototype.onConnectionState = function(cb) {
-  this.window.webContents.send('on-connection-state', this._interop('on-connection-state', cb));
-};
-VoiceEngine.prototype.getInputDevices = function(cb) {
-  this.window.webContents.send('get-input-devices', this._interop('get-input-devices', cb));
-};
-
-['setEchoCancellation', 'setNoiseSuppression', 'setAutomaticGainControl'].forEach(function(method) {
-  VoiceEngine.prototype[method] = function(enabled) {
-    this.window.webContents.send(method, enabled);
-  };
-});
-
-VoiceEngine.prototype.setInputDevice = function(inputDeviceIndex) {
-  this.window.webContents.send('set-input-device', inputDeviceIndex);
-};
-VoiceEngine.prototype.setInputMode = function(mode, options) {
-  this.window.webContents.send('set-input-mode', mode, options);
-};
-VoiceEngine.prototype.getOutputDevices = function(cb) {
-  this.window.webContents.send('get-output-devices', this._interop('get-output-devices', cb));
-};
-*/
-
-// WebRTC backend does not support setting the output device
-//VoiceEngine.prototype.setOutputDevice = noop;
-
-// WebRTC backend does not support setting the input volume
-//VoiceEngine.prototype.setInputVolume = noop;
-
-/*
-VoiceEngine.prototype.setOutputVolume = function(volume) {
-  this.window.webContents.send('set-output-volume', volume * 100);
-};
-VoiceEngine.prototype.setSelfMute = function(mute) {
-  this.window.webContents.send('set-self-mute', mute);
-};
-VoiceEngine.prototype.setSelfDeafen = function(deaf) {
-  this.window.webContents.send('set-self-deafen', deaf);
-};
-VoiceEngine.prototype.setLocalMute = function(userId, mute) {
-  this.window.webContents.send('set-local-mute', userId, mute);
-};
-VoiceEngine.prototype.setLocalVolume = function(userId, volume) {
-  this.window.webContents.send('set-local-volume', userId, volume * 100);
-};
-VoiceEngine.prototype.destroyTransport = function() {
-  this.window.webContents.send('destroy-transport');
-};
-*/
-
-// WebRTC backend does not implement this method
-//VoiceEngine.prototype.setTransportOptions = logCall('setTransportOptions');
-
-/*
-VoiceEngine.prototype.handleSpeaking = function(userId, speaking) {
-  this.window.webContents.send('handle-speaking', userId, speaking);
-};
-VoiceEngine.prototype.handleSessionDescription = function(obj) {
-  this.window.webContents.send('handle-session-description', obj);
-};
-VoiceEngine.prototype.mergeUsers = function(users) {
-  this.window.webContents.send('merge-users', users);
-};
-VoiceEngine.prototype.destroyUser = function(userId) {
-  this.window.webContents.send('destroy-user', userId);
-};
-*/
 
 exports['default'] = new VoiceEngine({});
 module.exports = exports['default'];

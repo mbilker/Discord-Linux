@@ -90,6 +90,8 @@ var VoiceEngineShim = {
   handleSpeaking: VoiceEngine.handleSpeaking,
   debugDump: VoiceEngine.debugDump,
 
+  playSound: VoiceEngine.playSound,
+
   Constants: {}
 };
 

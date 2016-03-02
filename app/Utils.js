@@ -9,7 +9,8 @@ Object.defineProperty(exports, '__esModule', {
 var noop = function noop() {};
 
 exports['default'] = {
-getIdleMilliseconds: noop,
-setGameCandidateOverrides: noop
+  shouldDisplayNotifications: true,
+  getIdleMilliseconds: noop,
+  setGameCandidateOverrides: noop
 }
 module.exports = exports['default'];
