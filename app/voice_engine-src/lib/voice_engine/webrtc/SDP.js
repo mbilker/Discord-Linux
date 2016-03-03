@@ -15,7 +15,7 @@ let generateSDP;
 if (platform.name === 'Firefox') {
   const DEFAULT_STREAM = [0, 'default', true];
 
-  generateSDP = (type, payloadType, candidates, mode, streams) => {
+  generateSDP = (type, payloadType, candidates, mode, streams, bitrate) => {
     candidates = transformCandidates(candidates, payloadType);
 
     streams = [DEFAULT_STREAM, ...streams];
@@ -28,6 +28,7 @@ if (platform.name === 'Firefox') {
 a=${mode === SENDRECV && i === 0 ? 'sendrecv' : 'sendonly'}
 a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level
 a=mid:sdparta_${i}
+b=AS:${bitrate}
 a=msid:${cname}-${ssrc} ${cname}-${ssrc}
 a=rtcp-mux
 a=rtpmap:${payloadType} opus/48000/2
@@ -54,7 +55,7 @@ a=msid-semantic:WMS *`,
   };
 }
 else {
-  generateSDP = (type, payloadType, candidates, mode, streams) => {
+  generateSDP = (type, payloadType, candidates, mode, streams, bitrate) => {
     let ssrcs = streams
       .filter(([ssrc, cname, active]) => active)
       .map(([ssrc, cname]) => {
@@ -70,6 +71,7 @@ a=setup:${type === 'answer' ? 'passive' : 'actpass'}`,
       transformCandidates(candidates, payloadType),
       `a=rtcp-mux
 a=mid:audio
+b=AS:${bitrate}
 a=${mode == SENDRECV ? 'sendrecv' : 'sendonly'}
 a=rtpmap:${payloadType} opus/48000/2
 a=fmtp:${payloadType} minptime=10; useinbandfec=1
@@ -101,12 +103,13 @@ export default {
    * @param {String} candidates
    * @param {String} mode
    * @param {Array<Array>} streams
+   * @param {Number} bitrate
    * @return {RTCSessionDescription}
    */
-  createSessionDescription(type, payloadType, candidates, mode, streams) {
+  createSessionDescription(type, payloadType, candidates, mode, streams, bitrate) {
     return new RTCSessionDescription({
       type: type,
-      sdp: generateSDP(type, payloadType, candidates, mode, streams)
+      sdp: generateSDP(type, payloadType, candidates, mode, streams, (bitrate || 40000) / 1000)
     });
   },
 

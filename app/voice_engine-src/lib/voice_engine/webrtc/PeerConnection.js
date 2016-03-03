@@ -26,13 +26,15 @@ else {
 }
 
 export default class PeerConnection extends EventEmitter {
-  constructor(ssrc, address, port) {
+  constructor(ssrc, address, port, bitrate) {
     super();
 
     this.pc = null;
 
     this.address = address;
     this.port = port;
+
+    this.bitrate = bitrate;
 
     this.ssrc = ssrc;
     this.remoteStreamHistory = [];
@@ -79,6 +81,16 @@ export default class PeerConnection extends EventEmitter {
       });
       this._iceGatheringTimeout = setTimeout(this._handleIceGatheringTimeout.bind(this), 5000);
     });
+  }
+
+  /**
+   * Update the encoding bit rate.
+   *
+   * @param {Number} bitrate
+   */
+  setBitRate(bitrate) {
+    this.bitrate = bitrate;
+    this._fakeRemoteOffer();
   }
 
   /**
@@ -327,7 +339,7 @@ export default class PeerConnection extends EventEmitter {
    */
   _updateRemoteDescription(type, mode, streams, callback) {
     this.pc.setRemoteDescription(
-      SDP.createSessionDescription(type, this.payloadType, this.remoteSDP, mode, streams),
+      SDP.createSessionDescription(type, this.payloadType, this.remoteSDP, mode, streams, this.bitrate),
       () => {
         logger.info('setRemoteDescription success');
         callback && callback();
@@ -343,9 +355,6 @@ export default class PeerConnection extends EventEmitter {
    */
   _fakeRemoteOffer() {
     const streams = this._getRemoteStreams();
-
-    // Bail if no streams, no reason to attempt it.
-    if (streams.length === 0) return;
 
     this._safeExecute(() => {
       this._updateRemoteDescription('offer', this.stream != null ? SDP.SENDRECV : SDP.RECVONLY, streams, () => {

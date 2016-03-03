@@ -17,6 +17,7 @@ let localVolumes = {};
 let speakers = {};
 let onSpeaking = function() {};
 let onConnectionState = null;
+let bitrate = null;
 
 const audioInput = new AudioInput();
 audioInput.onSpeaking = speaking => onSpeaking(null, speaking);
@@ -184,9 +185,13 @@ export default {
 
   setOutputDevice: noop,
 
-  setEncodingBitRate(bitsPerSecond) {
-    // todo -- looks like it needs to be encoded into SDP:
-    // https://bugs.chromium.org/p/webrtc/issues/detail?id=1881
+  setEncodingBitRate(newBitRate) {
+    bitrate = newBitRate;
+    peerConnection && peerConnection.setBitRate(bitrate);
+  },
+
+  supportsEncodingBitRate() {
+    return true;
   },
 
   setEchoCancellation(enabled) {
@@ -216,7 +221,7 @@ export default {
   },
 
   connect(ssrc, userId, address, port, callback) {
-    peerConnection = new PeerConnection(ssrc, address, port);
+    peerConnection = new PeerConnection(ssrc, address, port, bitrate);
     peerConnection.on('addstream', (cname, stream) => createAudioOutput(cname, stream));
     peerConnection.on('removestream', cname => destroyAudioOutput(cname));
     peerConnection.once('connected', () => {

@@ -370,10 +370,14 @@ export default {
     VoiceEngine.getOutputDevices(NativeUtils.makeDeferred(devices => callback(sanitizeDevices(devices))));
   },
 
-  setEncodingBitRate(bitsPerSecond) {
+  setEncodingBitRate(bitrate) {
     if (VoiceEngine.setEncodingBitRate) {
-      VoiceEngine.setEncodingBitRate(bitsPerSecond);
+      VoiceEngine.setEncodingBitRate(bitrate);
     }
+  },
+
+  supportsEncodingBitRate() {
+    return VoiceEngine.setEncodingBitRate != null;
   },
 
   setEchoCancellation(enabled) {
