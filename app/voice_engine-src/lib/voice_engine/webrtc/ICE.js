@@ -1,6 +1,6 @@
 import {Endpoints} from '../../../Constants';
 import Storage from '../../Storage';
-import request from 'superagent';
+import request from 'superagent/lib/client';
 
 const ICE_KEY = 'ice';
 const SERVER_DELAY = 5000;
@@ -37,7 +37,7 @@ export default {
     else {
       request
         .get(Endpoints.ICE)
-        .end(res => {
+        .end((err, res) => {
           if (res.ok) {
             servers = res.body.servers;
             persistServers(servers, res.body['ttl']);

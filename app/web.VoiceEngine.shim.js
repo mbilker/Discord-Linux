@@ -1,7 +1,5 @@
 console.log('I run before anything else');
 
-import platform from 'platform';
-
 var VoiceEngine = require('remote').require('./VoiceEngine');
 var runWebpackCb = false;
 
@@ -11,6 +9,8 @@ var VoiceEngineShim = {
   supported: true,
 
   autoEnable: false,
+
+  enable: VoiceEngine.enable,
 
   supportsAutomaticVAD() {
     return false;
@@ -24,21 +24,65 @@ var VoiceEngineShim = {
     return true;
   },
 
+  setForceSend: VoiceEngine.setPTTActive,
+  setInputMode: VoiceEngine.setInputMode,
+  setOutputVolume: VoiceEngine.setOutputVolume,
+
+  setVolumeChangeCallback: noop,
+
+  setSelfMute: VoiceEngine.setSelfMute,
+  setSelfDeaf: VoiceEngine.setSelfDeaf,
+  setLocalMute: VoiceEngine.setLocalMute,
+  setLocalVolume: VoiceEngine.setLocalVolume,
+  createUser: VoiceEngine.createUser,
+  destroyUser: VoiceEngine.destroyUser,
+  //onSpeaking: VoiceEngine.onSpeaking,
+  //onVoiceActivity: VoiceEngine.onVoiceActivity,
+  //onDevicesChanged: VoiceEngine.onDevicesChanged,
+
+  canSetInputDevice() {
+    return true;
+  },
+
+  getInputDevices: VoiceEngine.getInputDevices,
+  setInputDevice: VoiceEngine.setInputDevice,
+
   canSetOutputDevice() {
     return false;
   },
 
+  setOutputDevice: noop,
+
+  getOutputDevices: VoiceEngine.getOutputDevices,
+  setEncodingBitRate: VoiceEngine.setEncodingBitRate,
+
   supportsEncodingBitRate() {
     return true;
   },
+
+  setEchoCancellation: VoiceEngine.setEchoCancellation,
+  setNoiseSuppression: VoiceEngine.setNoiseSuppression,
+  setAutomaticGainControl: VoiceEngine.setAutomaticGainControl,
 
   canSetAttenuation() {
     return false;
   },
 
   canSetVoiceProcessing() {
-    return platform.layout === 'Blink';
+    return true;
   },
+
+  setAttenuation: noop,
+
+  onConnectionState: VoiceEngine.onConnectionState,
+  connect: VoiceEngine.connect,
+  disconnect: VoiceEngine.disconnect,
+  handleSessionDescription: VoiceEngine.handleSessionDescription,
+  handleSpeaking: VoiceEngine.handleSpeaking,
+  debugDump: VoiceEngine.debugDump,
+
+  setNoInputCallback: noop,
+  setNoInputThreshold: noop,
 
   collectDiagnostics(callback) {
     callback(null);
@@ -57,38 +101,7 @@ var VoiceEngineShim = {
   supportsNativePing: false,
 
   setInputVolume: noop,
-  setVolumeChangeCallback: noop,
-  setOutputDevice: noop,
-  setAttenuation: noop,
   setPingCallback: noop,
-
-  enable: VoiceEngine.enable,
-  setForceSend: VoiceEngine.setPTTActive,
-  setInputMode: VoiceEngine.setInputMode,
-  setOutputVolume: VoiceEngine.setOutputVolume,
-  setSelfMute: VoiceEngine.setSelfMute,
-  setSelfDeaf: VoiceEngine.setSelfDeaf,
-  setLocalMute: VoiceEngine.setLocalMute,
-  setLocalVolume: VoiceEngine.setLocalVolume,
-  createUser: VoiceEngine.createUser,
-  destroyUser: VoiceEngine.destroyUser,
-  //onSpeaking: VoiceEngine.onSpeaking,
-  //onVoiceActivity: VoiceEngine.onVoiceActivity,
-  //onDevicesChanged: VoiceEngine.onDevicesChanged,
-  getInputDevices: VoiceEngine.getInputDevices,
-  getOutputDevices: VoiceEngine.getOutputDevices,
-  canSetInputDevice: VoiceEngine.canSetInputDevice,
-  setInputDevice: VoiceEngine.setInputDevice,
-  setEncodingBitRate: VoiceEngine.setEncodingBitRate,
-  setEchoCancellation: VoiceEngine.setEchoCancellation,
-  setNoiseSuppression: VoiceEngine.setNoiseSuppression,
-  setAutomaticGainControl: VoiceEngine.setAutomaticGainControl,
-  onConnectionState: VoiceEngine.onConnectionState,
-  connect: VoiceEngine.connect,
-  disconnect: VoiceEngine.disconnect,
-  handleSessionDescription: VoiceEngine.handleSessionDescription,
-  handleSpeaking: VoiceEngine.handleSpeaking,
-  debugDump: VoiceEngine.debugDump,
 
   playSound: VoiceEngine.playSound,
 

@@ -10,6 +10,7 @@ debug('monkeypatch superagent');
 const originalEnd = request.Request.prototype.end;
 request.Request.prototype.end = function() {
   debug(`request.end: ${window.fingerprint} ${window.token}`);
+  //debug(`request.end: ${Array.prototype.slice.call(arguments)}`);
 
   const fingerprint = window.fingerprint;
   if (fingerprint) {
@@ -17,5 +18,7 @@ request.Request.prototype.end = function() {
   }
   this.set('Accept-Language', navigator.language);
   this.set('Authorization', window.token);
-  return originalEnd.apply(this, arguments);
+  const res = originalEnd.apply(this, arguments);
+  debug(`request res: ${require('util').format(res)}`);
+  return res;
 };
