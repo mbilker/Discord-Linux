@@ -5,6 +5,7 @@ var runWebpackCb = false;
 
 function noop() {}
 
+/*
 var VoiceEngineShim = {
   supported: true,
 
@@ -107,6 +108,7 @@ var VoiceEngineShim = {
 
   Constants: {}
 };
+*/
 
 function webpackCb(chunkIds, moreModules) {
   if (runWebpackCb) return;
@@ -117,11 +119,45 @@ function webpackCb(chunkIds, moreModules) {
   setImmediate(afterInitialJsonp);
 }
 
+function findWebpackModule(exportedToLookFor) {
+  const webpackRequire = window.__webpackRequire;
+  const mod = webpackRequire.c;
+  let results = [];
+
+  for (var i = 0; i < webpackRequire.m.length; i++) {
+    if (mod[i] && mod[i].exports && exportedToLookFor.every(x => mod[i].exports[x])) {
+      results.push(mod[i]);
+    }
+  }
+
+  return results;
+}
+
+function findWebRTCModule() {
+  const voiceLoader = findWebpackModule(['handleSessionDescription'])
+    .filter(x => __webpackRequire.m[x.id].toString().match(/webkitGetUserMedia/))[0];
+  if (!voiceLoader) {
+    throw new Error('Cannot find voice engine loader');
+  }
+  const text = __webpackRequire.m[voiceLoader.id].toString();
+  const reg = /n\(([0-9]+)\)/g;
+  let results = [];
+  var res = null;
+
+  while ((res = reg.exec(text))) {
+    results.push(res);
+  }
+
+  return results
+    .filter(x => !__webpackRequire.c[x[1]])
+    .map(x => parseInt(x[1]))[0];
+}
+
 function injectedModule(module, exports, webpackRequire) {
   console.log('injected module');
 
-  var webpackVoiceEngines = [0];
-  var modules = webpackRequire.c;
+  const modules = webpackRequire.c;
+  let webpackVoiceEngines = [0];
 
   window.__webpackRequire = webpackRequire;
   window.__voiceEngines = webpackVoiceEngines;
@@ -133,10 +169,20 @@ function injectedModule(module, exports, webpackRequire) {
     }
   }
 
+  //if (webpackVoiceEngines[0]) {
+  //  console.log('Found exports of NativeVoiceEngine, setting to shim...');
+  //  for (var i = 0; i < webpackVoiceEngines.length; i++) {
+  //    Object.assign(webpackVoiceEngines[i].exports, VoiceEngineShim);
+  //  }
+  //}
+
   if (webpackVoiceEngines[0]) {
-    console.log('Found exports of NativeVoiceEngine, setting to shim...');
+    const num = findWebRTCModule();
+    const obj = __webpackRequire(num);
+
     for (var i = 0; i < webpackVoiceEngines.length; i++) {
-      Object.assign(webpackVoiceEngines[i].exports, VoiceEngineShim);
+      Object.assign(webpackVoiceEngines[i].exports, obj);
+      webpackVoiceEngines[i].playSound = VoiceEngine.playSound;
     }
   }
 
@@ -151,3 +197,5 @@ function afterInitialJsonp() {
 
 //window['webpackJsonp'] = console.log.bind(console, 'parent webpack:');
 window['webpackJsonp'] = webpackCb;
+window['findWebpackModule'] = findWebpackModule;
+window['findWebRTCModule'] = findWebRTCModule;
