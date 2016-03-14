@@ -11,6 +11,7 @@ var noop = function noop() {};
 exports['default'] = {
   shouldDisplayNotifications: true,
   getIdleMilliseconds: noop,
-  setGameCandidateOverrides: noop
+  setGameCandidateOverrides: noop,
+  setProcessPriority: noop
 }
 module.exports = exports['default'];

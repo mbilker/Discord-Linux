@@ -437,6 +437,7 @@ function main() {
       show: isVisible,
       webPreferences: {
         blinkFeatures: "EnumerateDevices,AudioOutputDevices",
+        webSecurity: false,
         preload: require('path').join(__dirname, 'preload.js')
       }
     };

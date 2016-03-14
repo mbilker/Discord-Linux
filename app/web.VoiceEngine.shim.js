@@ -1,114 +1,11 @@
 console.log('I run before anything else');
 
-var VoiceEngine = require('remote').require('./VoiceEngine');
+import path from 'path';
+import {ipcRenderer} from 'electron';
+
 var runWebpackCb = false;
 
-function noop() {}
-
-/*
-var VoiceEngineShim = {
-  supported: true,
-
-  autoEnable: false,
-
-  enable: VoiceEngine.enable,
-
-  supportsAutomaticVAD() {
-    return false;
-  },
-
-  supportsMultiplePTT() {
-    return true;
-  },
-
-  supportsPTTReleaseDelay() {
-    return true;
-  },
-
-  setForceSend: VoiceEngine.setPTTActive,
-  setInputMode: VoiceEngine.setInputMode,
-  setOutputVolume: VoiceEngine.setOutputVolume,
-
-  setVolumeChangeCallback: noop,
-
-  setSelfMute: VoiceEngine.setSelfMute,
-  setSelfDeaf: VoiceEngine.setSelfDeaf,
-  setLocalMute: VoiceEngine.setLocalMute,
-  setLocalVolume: VoiceEngine.setLocalVolume,
-  createUser: VoiceEngine.createUser,
-  destroyUser: VoiceEngine.destroyUser,
-  //onSpeaking: VoiceEngine.onSpeaking,
-  //onVoiceActivity: VoiceEngine.onVoiceActivity,
-  //onDevicesChanged: VoiceEngine.onDevicesChanged,
-
-  canSetInputDevice() {
-    return true;
-  },
-
-  getInputDevices: VoiceEngine.getInputDevices,
-  setInputDevice: VoiceEngine.setInputDevice,
-
-  canSetOutputDevice() {
-    return false;
-  },
-
-  setOutputDevice: noop,
-
-  getOutputDevices: VoiceEngine.getOutputDevices,
-  setEncodingBitRate: VoiceEngine.setEncodingBitRate,
-
-  supportsEncodingBitRate() {
-    return true;
-  },
-
-  setEchoCancellation: VoiceEngine.setEchoCancellation,
-  setNoiseSuppression: VoiceEngine.setNoiseSuppression,
-  setAutomaticGainControl: VoiceEngine.setAutomaticGainControl,
-
-  canSetAttenuation() {
-    return false;
-  },
-
-  canSetVoiceProcessing() {
-    return true;
-  },
-
-  setAttenuation: noop,
-
-  onConnectionState: VoiceEngine.onConnectionState,
-  connect: VoiceEngine.connect,
-  disconnect: VoiceEngine.disconnect,
-  handleSessionDescription: VoiceEngine.handleSessionDescription,
-  handleSpeaking: VoiceEngine.handleSpeaking,
-  debugDump: VoiceEngine.debugDump,
-
-  setNoInputCallback: noop,
-  setNoInputThreshold: noop,
-
-  collectDiagnostics(callback) {
-    callback(null);
-  },
-
-  diagnosticsEnabled: false,
-
-  runDiagnostics(callback) {
-    callback(null);
-  },
-
-  getDiagnosticInfo() {
-    return null;
-  },
-
-  supportsNativePing: false,
-
-  setInputVolume: noop,
-  setPingCallback: noop,
-
-  playSound: VoiceEngine.playSound,
-
-  Constants: {}
-};
-*/
+function noop() {};
 
 function webpackCb(chunkIds, moreModules) {
   if (runWebpackCb) return;
@@ -133,7 +30,12 @@ function findWebpackModule(exportedToLookFor) {
   return results;
 }
 
+let loadedVoiceEngine = null;
 function findWebRTCModule() {
+  if (loadedVoiceEngine) {
+    return loadedVoiceEngine;
+  }
+
   const voiceLoader = findWebpackModule(['handleSessionDescription'])
     .filter(x => __webpackRequire.m[x.id].toString().match(/webkitGetUserMedia/))[0];
   if (!voiceLoader) {
@@ -148,9 +50,26 @@ function findWebRTCModule() {
     results.push(res);
   }
 
-  return results
+  loadedVoiceEngine =  results
     .filter(x => !__webpackRequire.c[x[1]])
     .map(x => parseInt(x[1]))[0];
+
+  return loadedVoiceEngine;
+}
+
+function shimVoiceEngine(voiceEngine) {
+  const num = findWebRTCModule();
+  const obj = __webpackRequire(num);
+
+  const {playSound} = findWebpackModule(['playSound']).filter(x => Object.keys(x.exports).length === 1)[0].exports;
+
+  Object.assign(voiceEngine, obj);
+  voiceEngine.playSound = function playSound2(name, volume) {
+    playSound(name, volume, true);
+  };
+  voiceEngine.setOnSpeakingCallback = voiceEngine.onSpeaking;
+  voiceEngine.setOnVoiceCallback = voiceEngine.onVoiceActivity;
+  voiceEngine.setDeviceChangeCallback = voiceEngine.onDevicesChanged;
 }
 
 function injectedModule(module, exports, webpackRequire) {
@@ -169,20 +88,9 @@ function injectedModule(module, exports, webpackRequire) {
     }
   }
 
-  //if (webpackVoiceEngines[0]) {
-  //  console.log('Found exports of NativeVoiceEngine, setting to shim...');
-  //  for (var i = 0; i < webpackVoiceEngines.length; i++) {
-  //    Object.assign(webpackVoiceEngines[i].exports, VoiceEngineShim);
-  //  }
-  //}
-
   if (webpackVoiceEngines[0]) {
-    const num = findWebRTCModule();
-    const obj = __webpackRequire(num);
-
     for (var i = 0; i < webpackVoiceEngines.length; i++) {
-      Object.assign(webpackVoiceEngines[i].exports, obj);
-      webpackVoiceEngines[i].playSound = VoiceEngine.playSound;
+      shimVoiceEngine(webpackVoiceEngines[i].exports);
     }
   }
 
