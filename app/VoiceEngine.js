@@ -15,10 +15,27 @@ VoiceEngine.prototype.setEmitVADLevel = noop;
 VoiceEngine.prototype.setSelfDeafen = noop;
 VoiceEngine.prototype.setInputVolume = noop;
 VoiceEngine.prototype.setInputDevice = noop;
-VoiceEngine.prototype.setInputMode = noop;
 VoiceEngine.prototype.setOutputDevice = noop;
 VoiceEngine.prototype.setOutputVolume = noop;
 
+VoiceEngine.prototype.setInputMode = function setInputMode(mode, options) {
+  if (typeof(mode) === 'number') {
+    if (mode === 1) {
+      mode = "VOICE_ACTIVITY";
+    } else if (mode === 2) {
+      mode = "PUSH_TO_TALK";
+    }
+  }
+
+  options = {
+    shortcut: options.shortcut,
+    threshold: options.vadThreshold,
+    autoThreshold: !!options.vadAutoThreshold,
+    delay: options.pttDelay
+  };
+
+  BrowserWindow.fromId(mainWindowId).webContents.send('handleSetInputMode', mode, options);
+};
 VoiceEngine.prototype.getInputDevices = function(cb) {
   console.log('getInputDevices');
 };
@@ -40,7 +57,6 @@ VoiceEngine.prototype.getOutputDevices = function(cb) {
 //};
 
 VoiceEngine.prototype.handleOnSpeakingEvent = function(userId, isSpeaking) {
-  console.log('handleOnSpeakingEvent')
   BrowserWindow.fromId(mainWindowId).webContents.send('user-speaking', {userId, isSpeaking});
 };
 VoiceEngine.prototype.handleOnVoiceEvent = function(level) {

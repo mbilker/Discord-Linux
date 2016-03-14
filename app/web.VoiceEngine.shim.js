@@ -59,6 +59,7 @@ function findWebRTCModule() {
 }
 
 let lastVoiceEngine = null;
+let lastInputMode = null;
 function shimVoiceEngine(voiceEngine) {
   if (voiceEngine === lastVoiceEngine) {
     return;
@@ -87,6 +88,11 @@ function shimVoiceEngine(voiceEngine) {
   //obj.onDevicesChanged((...args) => {
   //  mainProcess.handleOnDevicesChangedEvent(...args);
   //});
+  if (lastInputMode) {
+    const { mode, options } = lastInputMode;
+    obj.setInputMode(mode, options);
+  }
+
   obj.getInputDevices((devices) => {
     const device = devices[0].id;
     obj.setInputDevice(device);
@@ -127,6 +133,16 @@ function afterInitialJsonp() {
 
   window['webpackJsonp']([0], [injectedModule]);
 }
+
+ipcRenderer.on('handleSetInputMode', function handleSetInputMode(ev, mode, options) {
+  lastInputMode = {mode, options};
+  if (lastVoiceEngine) {
+    console.log('setting input mode');
+    lastVoiceEngine.setInputMode(mode, options);
+  } else {
+    console.log('no voice engine available, storing for later initialization');
+  }
+});
 
 //window['webpackJsonp'] = console.log.bind(console, 'parent webpack:');
 window['webpackJsonp'] = webpackCb;
