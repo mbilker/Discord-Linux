@@ -26,24 +26,34 @@ VoiceEngine.prototype.getOutputDevices = function(cb) {
   console.log('getOutputDevices');
 };
 
-VoiceEngine.prototype.setOnSpeakingCallback = function(cb) {
+//VoiceEngine.prototype.setOnSpeakingCallback = function(cb) {
   //this.window.webContents.send('setOnSpeakingCallback', this._interop('setOnSpeakingCallback', cb));
-  console.log('setOnSpeakingCallback');
-};
-VoiceEngine.prototype.setOnVoiceCallback = function(cb) {
+  //console.log('setOnSpeakingCallback');
+//};
+//VoiceEngine.prototype.setOnVoiceCallback = function(cb) {
   //this.window.webContents.send('setOnVoiceCallback', this._interop('setOnVoiceCallback', cb));
-  console.log('setOnVoiceCallback');
-};
-VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
+  //console.log('setOnVoiceCallback');
+//};
+//VoiceEngine.prototype.setDeviceChangeCallback = function(cb) {
   //this.window.webContents.send('setDeviceChangeCallback', this._interop('setDeviceChangeCallback', cb));
-  console.log('setDeviceChangeCallback');
+  //console.log('setDeviceChangeCallback');
+//};
+
+VoiceEngine.prototype.handleOnSpeakingEvent = function(userId, isSpeaking) {
+  console.log('handleOnSpeakingEvent')
+  BrowserWindow.fromId(mainWindowId).webContents.send('user-speaking', {userId, isSpeaking});
+};
+VoiceEngine.prototype.handleOnVoiceEvent = function(level) {
+  BrowserWindow.fromId(mainWindowId).webContents.send('on-voice', {level});
+};
+VoiceEngine.prototype.handleOnDevicesChangedEvent = function(inputDevices, outputDevices) {
+  BrowserWindow.fromId(mainWindowId).webContents.send('device-changed', {inputDevices, outputDevices});
 };
 
-VoiceEngine.prototype.playSound = function(name, volume) {
+//VoiceEngine.prototype.playSound = function(name, volume) {
   //this.window.webContents.send('playSound', name, volume);
-  console.log('playSound', name, volume);
-  BrowserWindow.fromId(mainWindowId).webContents.send('playSound', name, volume);
-};
+  //BrowserWindow.fromId(mainWindowId).webContents.send('playSound', name, volume);
+//};
 
 exports['default'] = new VoiceEngine({});
 module.exports = exports['default'];

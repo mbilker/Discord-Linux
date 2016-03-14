@@ -1,8 +1,9 @@
 console.log('I run before anything else');
 
 import path from 'path';
-import {ipcRenderer} from 'electron';
+import { ipcRenderer, remote } from 'electron';
 
+const mainProcess = remote.require('./VoiceEngine');
 var runWebpackCb = false;
 
 function noop() {};
@@ -57,7 +58,15 @@ function findWebRTCModule() {
   return loadedVoiceEngine;
 }
 
+let lastVoiceEngine = null;
 function shimVoiceEngine(voiceEngine) {
+  if (voiceEngine === lastVoiceEngine) {
+    return;
+  }
+
+  lastVoiceEngine = voiceEngine;
+  console.log('shimming', voiceEngine);
+
   const num = findWebRTCModule();
   const obj = __webpackRequire(num);
 
@@ -67,28 +76,44 @@ function shimVoiceEngine(voiceEngine) {
   voiceEngine.playSound = function playSound2(name, volume) {
     playSound(name, volume, true);
   };
-  voiceEngine.setOnSpeakingCallback = voiceEngine.onSpeaking;
-  voiceEngine.setOnVoiceCallback = voiceEngine.onVoiceActivity;
-  voiceEngine.setDeviceChangeCallback = voiceEngine.onDevicesChanged;
+
+  obj.onSpeaking((...args) => {
+    console.log('onSpeaking', ...args);
+    mainProcess.handleOnSpeakingEvent(...args);
+  });
+  obj.onVoiceActivity((...args) => {
+    mainProcess.handleOnVoiceEvent(...args);
+  });
+  //obj.onDevicesChanged((...args) => {
+  //  mainProcess.handleOnDevicesChangedEvent(...args);
+  //});
+  obj.getInputDevices((devices) => {
+    const device = devices[0].id;
+    obj.setInputDevice(device);
+
+    obj.enable((err) => {
+      console.log('VoiceEngine.enable', err);
+    });
+  });
 }
 
 function injectedModule(module, exports, webpackRequire) {
   console.log('injected module');
 
   const modules = webpackRequire.c;
-  let webpackVoiceEngines = [0];
+  let webpackVoiceEngines = [];
 
   window.__webpackRequire = webpackRequire;
   window.__voiceEngines = webpackVoiceEngines;
 
   for (var i = 0; i < webpackRequire.m.length; i++) {
     if (modules[i] && modules[i].exports && modules[i].exports.handleSessionDescription) {
-      webpackVoiceEngines[0] = modules[i];
+      webpackVoiceEngines.push(modules[i]);
       break;
     }
   }
 
-  if (webpackVoiceEngines[0]) {
+  if (webpackVoiceEngines.length) {
     for (var i = 0; i < webpackVoiceEngines.length; i++) {
       shimVoiceEngine(webpackVoiceEngines[i].exports);
     }
@@ -107,3 +132,4 @@ function afterInitialJsonp() {
 window['webpackJsonp'] = webpackCb;
 window['findWebpackModule'] = findWebpackModule;
 window['findWebRTCModule'] = findWebRTCModule;
+window['getVoiceEngine'] = () => lastVoiceEngine;
